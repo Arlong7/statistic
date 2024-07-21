@@ -17,15 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $email = mysqli_real_escape_string($conn, $_POST['email']);
         $dayOfEntry = mysqli_real_escape_string($conn, $_POST['dayOfEntry']);
         $address = mysqli_real_escape_string($conn, $_POST['address']);
+        $position = mysqli_real_escape_string($conn, $_POST['position']);
+        $member = mysqli_real_escape_string($conn, $_POST['member']);
 
-        $sql = "INSERT INTO StayMember (Name, Surname, Gender, Status, PhoneNumber, IDNumber, Email, DayOfEntry, Address) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO StayMember (Name, Surname, Gender, Status, PhoneNumber, IDNumber, Email, DayOfEntry, Address, Position, Member) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssss", $name, $surname, $gender, $status, $phoneNumber, $idNumber, $email, $dayOfEntry, $address);
+        mysqli_stmt_bind_param($stmt, "sssssssssss", $name, $surname, $gender, $status, $phoneNumber, $idNumber, $email, $dayOfEntry, $address, $position, $member);
         if (mysqli_stmt_execute($stmt)) {
-            echo "New StayMember created successfully";
+            echo "ສໍາເລັດໃສ່ StayMember ໃໝ່ແລ້ວ";
         } else {
-            echo "Error: " . mysqli_error($conn);
+            echo "ຜິດພາດ: " . mysqli_error($conn);
         }
         mysqli_stmt_close($stmt);
         header("Location: {$_SERVER['PHP_SELF']}");
@@ -44,16 +46,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $email = mysqli_real_escape_string($conn, $_POST['email']);
         $dayOfEntry = mysqli_real_escape_string($conn, $_POST['dayOfEntry']);
         $address = mysqli_real_escape_string($conn, $_POST['address']);
+        $position = mysqli_real_escape_string($conn, $_POST['position']);
+        $member = mysqli_real_escape_string($conn, $_POST['member']);
 
         $sql = "UPDATE StayMember 
-                SET Name=?, Surname=?, Gender=?, Status=?, PhoneNumber=?, IDNumber=?, Email=?, DayOfEntry=?, Address=?
+                SET Name=?, Surname=?, Gender=?, Status=?, PhoneNumber=?, IDNumber=?, Email=?, DayOfEntry=?, Address=?, Position=?, Member=?
                 WHERE P_ID=?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssi", $name, $surname, $gender, $status, $phoneNumber, $idNumber, $email, $dayOfEntry, $address, $id);
+        mysqli_stmt_bind_param($stmt, "sssssssssssi", $name, $surname, $gender, $status, $phoneNumber, $idNumber, $email, $dayOfEntry, $address, $position, $member, $id);
         if (mysqli_stmt_execute($stmt)) {
-            echo "StayMember updated successfully";
+            echo "ປ່ອນ StayMember ແກ້ໄຂໃໝ່ສໍາເລັດແລ້ວ";
         } else {
-            echo "Error: " . mysqli_error($conn);
+            echo "ຜິດພາດ: " . mysqli_error($conn);
         }
         mysqli_stmt_close($stmt);
         header("Location: {$_SERVER['PHP_SELF']}");
@@ -70,12 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (mysqli_stmt_execute($stmt)) {
             if (mysqli_stmt_affected_rows($stmt) > 0) {
-                echo "StayMember deleted successfully";
+                echo "ລົບ StayMember ສໍາເລັດແລ້ວ";
             } else {
-                echo "No records found for deletion";
+                echo "ບໍ່ມີບັນທຶກໃດເພື່ອລົບ";
             }
         } else {
-            echo "Error deleting StayMember: " . mysqli_error($conn);
+            echo "ຜິດພາດສໍາເລັດໃນການລົບ StayMember: " . mysqli_error($conn);
         }
         mysqli_stmt_close($stmt);
         header("Location: {$_SERVER['PHP_SELF']}");
@@ -85,98 +89,130 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lo">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StayMember Management</title>
+    <title>ການຈັດການ StayMember</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-    <!-- bootstrap core css -->
-    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Phetsarath+OT&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Phetsarath OT', sans-serif;
+        }
+
+        /* Modal specific styles */
+        .modal-content {
+            max-width: 600px; /* Adjust width as needed */
+            max-height: 80vh; /* Adjust height as needed */
+            overflow-y: auto; /* Allow vertical scrolling if needed */
+        }
+        
+    </style>
 </head>
 
 <body class="bg-gray-100 flex">
     <?php include("nav.php"); ?>
 
-    <div class="flex-1 p-6">
+    <div class="p-2 mt-2 flex-grow">
         <div class="container mx-auto">
-            <h1 class="text-2xl font-bold mb-6">StayMember Management</h1>
+            <h1 class="text-2xl font-bold mb-6">ການຈັດການ StayMember</h1>
 
             <!-- Button to open modal for adding StayMember -->
             <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4" onclick="openModal('create')">
-                Add StayMember
+                ເພີ່ມ StayMember
+            </button>
+
+            <!-- Button to print the table -->
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4" onclick="printTable()">
+                ພິມລາຍງານ
             </button>
 
             <!-- Modal -->
-            <div id="myModal" class="modal hidden fixed inset-0 w-full h-full bg-gray-900 bg-opacity-50 flex justify-center items-center">
-                <div class="modal-content bg-white p-4 rounded w-full max-w-md overflow-y-auto">
-                    <h2 class="text-xl font-bold mb-4">StayMember Details</h2>
+            <div id="myModal" class="modal hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+                <div class="modal-content bg-white p-4 rounded">
+                    <h2 class="text-xl font-bold mb-4">ລາຍລະອຽດ StayMember</h2>
                     <form action="" method="POST" id="stayMemberForm">
                         <input type="hidden" name="action" id="modalAction">
                         <input type="hidden" name="id" id="id">
                         <div class="mb-4">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <label for="name" class="block text-sm font-medium text-gray-700">ຊື່</label>
                             <input type="text" name="name" id="name" class="form-input mt-1 block w-full" required>
                         </div>
                         <div class="mb-4">
-                            <label for="surname" class="block text-sm font-medium text-gray-700">Surname</label>
+                            <label for="surname" class="block text-sm font-medium text-gray-700">ນາມສະກຸນ</label>
                             <input type="text" name="surname" id="surname" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                            <label for="gender" class="block text-sm font-medium text-gray-700">ເພດ</label>
                             <select name="gender" id="gender" class="form-select mt-1 block w-full">
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <!-- Add more options if needed -->
+                                <option value="male">ຜູ້ຊາຍ</option>
+                                <option value="female">ຜູ້ຍິງ</option>
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                            <label for="status" class="block text-sm font-medium text-gray-700">ສະຖານະ</label>
                             <input type="text" name="status" id="status" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <label for="phoneNumber" class="block text-sm font-medium text-gray-700">ເບີໂທ</label>
                             <input type="text" name="phoneNumber" id="phoneNumber" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="idNumber" class="block text-sm font-medium text-gray-700">ID Number</label>
+                            <label for="idNumber" class="block text-sm font-medium text-gray-700">ເລກບັດໃບປະຈະບັດ</label>
                             <input type="text" name="idNumber" id="idNumber" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <label for="email" class="block text-sm font-medium text-gray-700">ອີເມວ</label>
                             <input type="email" name="email" id="email" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="dayOfEntry" class="block text-sm font-medium text-gray-700">Day of Entry</label>
+                            <label for="dayOfEntry" class="block text-sm font-medium text-gray-700">ວັນທີເຂອນເຂົ້າ</label>
                             <input type="date" name="dayOfEntry" id="dayOfEntry" class="form-input mt-1 block w-full">
                         </div>
                         <div class="mb-4">
-                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="address" id="address" class="form-textarea mt-1 block w-full"></textarea>
+                            <label for="address" class="block text-sm font-medium text-gray-700">ບໍລິທັດ</label>
+                            <input type="text" name="address" id="address" class="form-input mt-1 block w-full">
+                        </div>
+                        <div class="mb-4">
+                            <label for="position" class="block text-sm font-medium text-gray-700">ສະຖານທີ່</label>
+                            <input type="text" name="position" id="position" class="form-input mt-1 block w-full">
+                        </div>
+                        <div class="mb-4">
+                            <label for="member" class="block text-sm font-medium text-gray-700">ສະມະດາ</label>
+                            <select name="member" id="member" class="form-select mt-1 block w-full">
+                                <option value="moves_out">ອອກ</option>
+                                <option value="moves_in">ເຂົ້າ</option>
+                                <option value="alternate_member">ສະມະດາໃຫມ່</option>
+                                <option value="complete_member">ສະມະດາເຕັມ</option>
+                                <option value="new_member">ສະມະດາໃຫມ່</option>
+                            </select>
                         </div>
                         <div class="flex justify-end">
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Save</button>
-                            <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onclick="closeModal()">Cancel</button>
+                            <button type="button" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="closeModal()">ຍົກເຕິມ</button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">ບັນທຶກ</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Display StayMembers in a table -->
-            <table class="min-w-full bg-white mt-6 border border-gray-300">
+            <!-- Table -->
+            <table class="min-w-full bg-white border" id="stayMemberTable">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2 border">Name</th>
-                        <th class="px-4 py-2 border">Surname</th>
-                        <th class="px-4 py-2 border">Gender</th>
-                        <th class="px-4 py-2 border">Status</th>
-                        <th class="px-4 py-2 border">Phone Number</th>
-                        <th class="px-4 py-2 border">ID Number</th>
-                        <th class="px-4 py-2 border">Email</th>
-                        <th class="px-4 py-2 border">Day of Entry</th>
-                        <th class="px-4 py-2 border">Address</th>
-                        <th class="px-4 py-2 border">Actions</th>
+                        <th class="px-4 py-2 border">ຊື່</th>
+                        <th class="px-4 py-2 border">ນາມສະກຸນ</th>
+                        <th class="px-4 py-2 border">ເພດ</th>
+                        <th class="px-4 py-2 border">ສະຖານະ</th>
+                        <th class="px-4 py-2 border">ເບີໂທ</th>
+                        <th class="px-4 py-2 border">ເລກບັດ</th>
+                        <th class="px-4 py-2 border">ອີເມວ</th>
+                        <th class="px-4 py-2 border">ວັນທີເຂົ້າ</th>
+                        <th class="px-4 py-2 border">ທີ່ຢູ່</th>
+                        <th class="px-4 py-2 border">ຕໍາເເໜ່ງ</th>
+                        <th class="px-4 py-2 border">ປະເພດ</th>
+                        <th class="px-4 py-2 border">ການຈັດການ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -194,9 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         echo "<td class='border px-4 py-2'>" . htmlspecialchars($row['Email']) . "</td>";
                         echo "<td class='border px-4 py-2'>" . htmlspecialchars($row['DayOfEntry']) . "</td>";
                         echo "<td class='border px-4 py-2'>" . htmlspecialchars($row['Address']) . "</td>";
+                        echo "<td class='border px-4 py-2'>" . htmlspecialchars($row['Position']) . "</td>";
+                        echo "<td class='border px-4 py-2'>" . htmlspecialchars($row['Member']) . "</td>";
                         echo "<td class='border px-4 py-2'>";
-                        echo "<button class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2' onclick='openModal(\"update\", " . json_encode($row) . ")'>Edit</button>";
-                        echo "<button class='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded' onclick='openModal(\"delete\", " . $row['P_ID'] . ")'>Delete</button>";
+                        echo "<button class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2' onclick='openModal(\"update\", " . json_encode($row) . ")'>ແກ້ໄຂ</button>";
+                        echo "<button class='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded' onclick='openModal(\"delete\", " . $row['P_ID'] . ")'>ລົບ</button>";
                         echo "</td>";
                         echo "</tr>";
                     }
@@ -222,6 +260,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const emailInput = document.getElementById('email');
             const dayOfEntryInput = document.getElementById('dayOfEntry');
             const addressInput = document.getElementById('address');
+            const positionInput = document.getElementById('position');
+            const memberInput = document.getElementById('member');
 
             stayMemberForm.reset();
 
@@ -238,11 +278,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 emailInput.value = data.Email;
                 dayOfEntryInput.value = data.DayOfEntry;
                 addressInput.value = data.Address;
+                positionInput.value = data.Position;
+                memberInput.value = data.Member;
                 modalAction.value = 'update';
             } else if (action === 'delete' && data) {
-                modalAction.value = 'delete';
-                idInput.value = data;
-                stayMemberForm.submit();
+                if (confirm('ຢືນຢັນການລົບບັນທຶກນີ້ບໍ?')) {
+                    idInput.value = data;
+                    modalAction.value = 'delete';
+                    stayMemberForm.submit();
+                }
+                return;
             }
 
             modal.classList.remove('hidden');
@@ -252,6 +297,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const modal = document.getElementById('myModal');
             modal.classList.add('hidden');
         }
+
+        function printTable() {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>ປະຕິເສດຕາຕະລາງ</title>');
+    printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css">');
+    printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Phetsarath+OT&display=swap" rel="stylesheet">');
+    printWindow.document.write('<style>body { font-family: "Phetsarath OT", sans-serif; }</style>');
+    printWindow.document.write('</head><body >');
+    printWindow.document.write(document.getElementById('stayMemberTable').outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+}
+
     </script>
 </body>
 

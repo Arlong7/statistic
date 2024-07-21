@@ -78,8 +78,25 @@ function deleteMember($conn, $cm_id) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ສະມາຊີກສົມບູນ</title>
+    <title>ສະມາຊິກສົມບູນ</title>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: "Phetsarath OT";
+            src: url("fonts/Phetsarath_OT.woff2") format("woff2"), url("fonts/Phetsarath_OT.woff") format("woff");
+        }
+        
+        body {
+            font-family: "Phetsarath OT", sans-serif;
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body {
+                font-family: "Phetsarath OT", sans-serif;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex">
 <?php include("nav.php");?>
@@ -92,11 +109,12 @@ function deleteMember($conn, $cm_id) {
             }, 3000); // 3 seconds
         </script>
     <?php endif; ?>
-    <h2 class="text-2xl font-bold mb-6">ສະມາຊີກສົມບູນ</h2>
+    <h2 class="text-2xl font-bold mb-6">ສະມາຊິກສົມບູນ</h2>
     <?php if ($_SESSION['role'] === 'admin'): ?>
         <button id="open-modal" class="bg-blue-500 text-white px-4 py-2 rounded">ເພີ່ມສະມາຊິກ</button>
     <?php endif; ?>
-    <table class="min-w-full bg-white mt-6">
+
+    <table class="min-w-full bg-white mt-6" id="members-table">
         <thead>
             <tr>
                 <th class="px-4 py-2">ລະຫັດ</th>

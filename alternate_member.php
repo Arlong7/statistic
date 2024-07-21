@@ -157,8 +157,8 @@ function redirectToSelf() {
         <?php if ($_SESSION['role'] === 'admin'): ?>
             
         <button id="open-modal" class="bg-blue-500 text-white px-4 py-2 rounded">ເພີ່ມສະມາຊິກ</button>
-        <?php endif; ?>
         <button id="print-btn" class="bg-green-500 text-white px-4 py-2 rounded ml-4">ພິມລາຍການ</button>
+        <?php endif; ?>
         <table id="members-table" class="min-w-full bg-white mt-6">
             <thead>
                 <tr>
@@ -168,7 +168,7 @@ function redirectToSelf() {
                     <th class="px-4 py-2">ທີ່ຢູ່</th>
                     <th class="px-4 py-2">ອີເມວ</th>
                     <th class="px-4 py-2">ວັນທີ</th>
-                    <th class="px-4 py-2">ເບີໂທລະສັບ</th>
+                    <th class="px-4 py-2">ເບອໂທລະສັບ</th>
                     <!-- Display Actions column only if user is admin -->
                     <?php if ($_SESSION['role'] === 'admin'): ?>
                     <th class="px-4 py-2">ການຈັດການ</th>
@@ -242,7 +242,7 @@ function redirectToSelf() {
                         <input type="date" id="entryDate" name="entryDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                     <div class="mb-4">
-                        <label for="phoneNumber" class="block text-gray-700">ເບີໂທລະສັບ</label>
+                        <label for="phoneNumber" class="block text-gray-700">ເບອໂທລະສັບ</label>
                         <input type="text" id="phoneNumber" name="phoneNumber" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                     <div class="flex items-center justify-end">
