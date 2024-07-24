@@ -1,55 +1,48 @@
 <?php
-include 'dbconnection.php'; // Include your database connection file
+include 'dbconnection.php'; // ລວມເອົາໄຟລ໌ການເຊື່ອມຕໍ່ຖານຂໍ້ມູນຂອງທ່ານ
 
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Sanitize inputs
+    // ທຳຄວາມສະອາດຂໍ້ມູນປ້ອນເຂົ້າ
     $username = $conn->real_escape_string($_POST['username']);
-    $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
-    $role = isset($_POST['role']) ? $_POST['role'] : 'user'; // Default role is 'user'
+    $role = isset($_POST['role']) ? $_POST['role'] : 'user'; // ເອີ້ນໂລກປົກກະຕິແມ່ນ 'user'
 
-    // Validate inputs
+    // ກວດສອບຂໍ້ມູນປ້ອນເຂົ້າ
     if (empty($username)) {
-        $errors[] = "Username is required.";
-    }
-
-    if (empty($email)) {
-        $errors[] = "Email is required.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Invalid email format.";
+        $errors[] = "ຕ້ອງປ້ອນຊື່ຜູ້ໃຊ້.";
     }
 
     if (empty($password)) {
-        $errors[] = "Password is required.";
+        $errors[] = "ຕ້ອງປ້ອນລະຫັດຜ່ານ.";
     }
 
     if ($password !== $confirm_password) {
-        $errors[] = "Passwords do not match.";
+        $errors[] = "ລະຫັດຜ່ານບໍ່ຕົງກັນ.";
     }
 
-    // If no errors, proceed with registration
+    // ຖ້າບໍ່ມີຄວາມຜິດພາດ, ດຳເນີນການລົງທະບຽນ
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // Prepare statement to insert user into database
-        $stmt = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $username, $email, $hashed_password, $role);
+        // ຕຽມຄຳສັ່ງເພື່ອເພີ່ມຜູ້ໃຊ້ເຂົ້າໃນຖານຂໍ້ມູນ
+        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $username, $hashed_password, $role);
 
         if ($stmt->execute()) {
-            // Registration successful
+            // ການລົງທະບຽນສຳເລັດ
             echo json_encode(['status' => 'success']);
             exit();
         } else {
-            $errors[] = "Error: " . $stmt->error;
+            $errors[] = "ຜິດພາດ: " . $stmt->error;
         }
 
         $stmt->close();
     }
 
-    // Return errors as JSON
+    // ສົ່ງຄືນຄວາມຜິດພາດເປັນ JSON
     echo json_encode(['status' => 'error', 'errors' => $errors]);
     exit();
 }
@@ -57,11 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $conn->close();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lo">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>ລົງທະບຽນ</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         /* Style for popup modal */
@@ -106,33 +99,29 @@ $conn->close();
 </head>
 <body class="bg-blue-900 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+        <h2 class="text-2xl font-bold mb-6 text-center">ລົງທະບຽນ</h2>
         <form action="register.php" method="POST" id="registerForm" class="space-y-4">
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <label for="username" class="block text-sm font-medium text-gray-700">ຊື່ຜູ້ໃຊ້</label>
                 <input type="text" id="username" name="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <label for="password" class="block text-sm font-medium text-gray-700">ລະຫັດຜ່ານ</label>
                 <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
             <div>
-                <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <label for="confirm_password" class="block text-sm font-medium text-gray-700">ຢືນຢັນລະຫັດຜ່ານ</label>
                 <input type="password" id="confirm_password" name="confirm_password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                <label for="role" class="block text-sm font-medium text-gray-700">ບົດບາດ</label>
                 <select name="role" id="role" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                    <option value="user">ຜູ້ໃຊ້</option>
+                    <option value="admin">ຜູ້ດູແລ</option>
                 </select>
             </div>
             <div>
-                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Register</button>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">ລົງທະບຽນ</button>
             </div>
         </form>
     </div>

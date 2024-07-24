@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ການນຳທາງໜ້າຈໍດ້ານຂ້າງ</title>
+  <title>ການນຳທາງໜ້າຈໍດ້ານຂໍາງ</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
   <style>
@@ -27,35 +27,20 @@
       background-color: #2563eb; /* blue-700 background for active link */
       border-left: 4px solid #1e40af; /* darker blue-800 border for active link */
     }
-    .dropdown {
-      background-color: #3b82f6; /* blue-500 */
-    }
   </style>
 </head>
 <body class="bg-gray-100 flex">
 
   <!-- Sidebar -->
-  <aside class="bg-gradient-to-r from-blue-500 to-purple-600 w-64 h-screen shadow-lg">
-    <div class="px-4 py-6">
+  <aside class="bg-gradient-to-r from-blue-500 to-purple-600 w-64 h-screen shadow-lg fixed top-0 left-0 z-10">
+    <div class="px-4 py-6 h-full flex flex-col">
       <a href="dashboard.php" class="font-bold text-white text-2xl block border-b-4 border-white mb-6">ສະຖິຕິ</a>
-      <nav>
+      <nav class="space-y-2 flex-grow">
         <a href="home.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ໜ້າຫຼັກ</a>
-
         <a href="employee.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ພະນັກງານ</a>
+        <a href="staymember.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກພັກ</a>
+        <a href="department.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ພະແນກ</a>
         
-        <div class="mt-2 relative">
-          <a href="#" id="membersToggle" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກ</a>
-          <div id="membersLinks" class="hidden dropdown mt-2 rounded-lg shadow-lg absolute left-0 w-full z-10">
-            <a href="staymember.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກພັກ</a>
-            <div class="border-t border-white mx-4"></div>
-            <a href="complete_member.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກສົມບູນ</a>
-            <a href="alternate_member.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກສຳຮອງ</a>
-            <div class="border-t border-white mx-4"></div>
-            <a href="newmember.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ສະມາຊິກໃໝ່</a>
-            <a href="movesin.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ຍ້າຍເຂົ້າ</a>
-            <a href="movesout.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ຍ້າຍອອກ</a>
-          </div>
-        </div>
         
         <?php
           // Check if a session is already started
@@ -70,6 +55,7 @@
           if ($role !== 'user'): ?>
             <a href="register.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ລົງທະບຽນ</a>
         <?php endif; ?>
+        
         <a href="http://www.sia.gov.la/sia/backend/web/index.php?r=site/index" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ກ່ຽວກັບ</a>
         <a href="logout.php" class="nav-item block py-3 px-4 text-white font-semibold rounded-lg">ອອກຈາກລະບົບ</a>
       </nav>
@@ -77,7 +63,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-grow p-4">
+  <main class="flex-grow ml-64 p-4">
     <div class="container mx-auto">
       <!-- Add your page content here -->
     </div>
@@ -96,15 +82,6 @@
         if (link.getAttribute('href') === path) {
           link.classList.add('active-link');
         }
-      });
-
-      // Add click event for toggling the Members links without refreshing
-      const membersToggle = document.getElementById('membersToggle');
-      const membersLinks = document.getElementById('membersLinks');
-      
-      membersToggle.addEventListener('click', function(event) {
-        event.preventDefault();
-        membersLinks.classList.toggle('hidden');
       });
     });
   </script>
