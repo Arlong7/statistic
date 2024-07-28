@@ -21,19 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($is_admin) {
         // Handle Create and Update actions
         if ($action == 'create' || $action == 'update') {
-            $department_name = $conn->real_escape_string($_POST['department_name']);
+            $name = $conn->real_escape_string($_POST['name']);
 
             if ($action == 'create') {
-                $stmt = $conn->prepare("INSERT INTO department (department_name) VALUES (?)");
-                $stmt->bind_param("s", $department_name);
+                $stmt = $conn->prepare("INSERT INTO provinces (name) VALUES (?)");
+                $stmt->bind_param("s", $name);
             } else if ($action == 'update') {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("UPDATE department SET department_name=? WHERE department_id=?");
-                $stmt->bind_param("si", $department_name, $department_id);
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("UPDATE provinces SET name=? WHERE id=?");
+                $stmt->bind_param("si", $name, $id);
             }
 
             if ($stmt->execute()) {
-                $message = $action == 'create' ? "New department record created successfully" : "Department record updated successfully";
+                $message = $action == 'create' ? "New province record created successfully" : "Province record updated successfully";
                 header("Location: {$_SERVER['PHP_SELF']}");
                 exit();
             } else {
@@ -44,12 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Handle Delete action
         if ($action == 'delete') {
-            if (isset($_POST['department_id'])) {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("DELETE FROM department WHERE department_id=?");
-                $stmt->bind_param("i", $department_id);
+            if (isset($_POST['id'])) {
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("DELETE FROM provinces WHERE id=?");
+                $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
-                    $message = "Department record deleted successfully";
+                    $message = "Province record deleted successfully";
                     header("Location: {$_SERVER['PHP_SELF']}");
                     exit();
                 } else {
@@ -63,16 +63,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Fetch departments
-$query = "SELECT * FROM department";
-$departments = $conn->query($query);
+// Fetch provinces
+$query = "SELECT * FROM provinces";
+$provinces = $conn->query($query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Department Management</title>
+    <title>Province Management</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
@@ -97,7 +97,7 @@ $departments = $conn->query($query);
     <?php include("nav.php"); ?>
 
     <div class="container mt-5 mx-auto">
-        <h1 class="mb-4 text-center">Department Management</h1>
+        <h1 class="mb-4 text-center">Province Management</h1>
 
         <?php if (isset($message)): ?>
             <div class="alert alert-<?php echo strpos($message, 'Error') !== false ? 'danger' : 'success'; ?>">
@@ -106,8 +106,8 @@ $departments = $conn->query($query);
         <?php endif; ?>
 
         <?php if ($is_admin): ?>
-            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#departmentModal" onclick="openModal('create')">
-                Add Department
+            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#provinceModal" onclick="openModal('create')">
+                Add Province
             </button>
         <?php endif; ?>
 
@@ -115,24 +115,24 @@ $departments = $conn->query($query);
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Department ID</th>
-                        <th>Department Name</th>
+                        <th>Province ID</th>
+                        <th>Province Name</th>
                         <?php if ($is_admin): ?>
                             <th>Actions</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($department = $departments->fetch_assoc()): ?>
+                    <?php while ($province = $provinces->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($department['department_id']); ?></td>
-                            <td><?php echo htmlspecialchars($department['department_name']); ?></td>
+                            <td><?php echo htmlspecialchars($province['id']); ?></td>
+                            <td><?php echo htmlspecialchars($province['name']); ?></td>
                             <?php if ($is_admin): ?>
                                 <td>
-                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#departmentModal" onclick='openModal("update", <?php echo json_encode($department); ?>)'>
+                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#provinceModal" onclick='openModal("update", <?php echo json_encode($province); ?>)'>
                                         Edit
                                     </button>
-                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $department['department_id']; ?>)'>
+                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $province['id']; ?>)'>
                                         Delete
                                     </button>
                                 </td>
@@ -144,30 +144,30 @@ $departments = $conn->query($query);
         </div>
     </div>
 
-    <!-- Add/Edit Department Modal -->
-    <div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true">
+    <!-- Add/Edit Province Modal -->
+    <div class="modal fade" id="provinceModal" tabindex="-1" aria-labelledby="provinceModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="departmentModalLabel">Department Form</h5>
+                    <h5 class="modal-title" id="provinceModalLabel">Province Form</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="departmentForm" method="POST">
-                        <input type="hidden" name="action" id="departmentAction">
-                        <input type="hidden" name="department_id" id="departmentId">
+                    <form id="provinceForm" method="POST">
+                        <input type="hidden" name="action" id="provinceAction">
+                        <input type="hidden" name="id" id="provinceId">
                         <div class="form-group">
-                            <label for="department_name">Department Name</label>
-                            <input type="text" class="form-control" name="department_name" id="department_name" required>
+                            <label for="name">Province Name</label>
+                            <input type="text" class="form-control" name="name" id="name" required>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <?php if ($is_admin): ?>
-                        <button type="submit" class="btn btn-primary" form="departmentForm">Save</button>
+                        <button type="submit" class="btn btn-primary" form="provinceForm">Save</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -185,12 +185,12 @@ $departments = $conn->query($query);
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete this department?</p>
+                    <p>Are you sure you want to delete this province?</p>
                 </div>
                 <div class="modal-footer">
                     <form id="deleteForm" method="POST">
                         <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="department_id" id="deleteId">
+                        <input type="hidden" name="id" id="deleteId">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
@@ -201,17 +201,17 @@ $departments = $conn->query($query);
 
     <!-- JavaScript to handle modal functionality -->
     <script>
-        function openModal(action, department = null) {
+        function openModal(action, province = null) {
             if (action === 'update') {
-                $('#departmentModalLabel').text('Edit Department');
-                $('#departmentAction').val('update');
-                $('#departmentId').val(department.department_id);
-                $('#department_name').val(department.department_name);
+                $('#provinceModalLabel').text('Edit Province');
+                $('#provinceAction').val('update');
+                $('#provinceId').val(province.id);
+                $('#name').val(province.name);
             } else {
-                $('#departmentModalLabel').text('Add Department');
-                $('#departmentAction').val('create');
-                $('#departmentId').val('');
-                $('#department_name').val('');
+                $('#provinceModalLabel').text('Add Province');
+                $('#provinceAction').val('create');
+                $('#provinceId').val('');
+                $('#name').val('');
             }
         }
 

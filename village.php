@@ -21,19 +21,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($is_admin) {
         // Handle Create and Update actions
         if ($action == 'create' || $action == 'update') {
-            $department_name = $conn->real_escape_string($_POST['department_name']);
+            $name = $conn->real_escape_string($_POST['name']);
+            $city_id = (int)$_POST['city_id'];
 
             if ($action == 'create') {
-                $stmt = $conn->prepare("INSERT INTO department (department_name) VALUES (?)");
-                $stmt->bind_param("s", $department_name);
+                $stmt = $conn->prepare("INSERT INTO villages (name, city_id) VALUES (?, ?)");
+                $stmt->bind_param("si", $name, $city_id);
             } else if ($action == 'update') {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("UPDATE department SET department_name=? WHERE department_id=?");
-                $stmt->bind_param("si", $department_name, $department_id);
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("UPDATE villages SET name=?, city_id=? WHERE id=?");
+                $stmt->bind_param("sii", $name, $city_id, $id);
             }
 
             if ($stmt->execute()) {
-                $message = $action == 'create' ? "New department record created successfully" : "Department record updated successfully";
+                $message = $action == 'create' ? "New village record created successfully" : "Village record updated successfully";
                 header("Location: {$_SERVER['PHP_SELF']}");
                 exit();
             } else {
@@ -44,12 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Handle Delete action
         if ($action == 'delete') {
-            if (isset($_POST['department_id'])) {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("DELETE FROM department WHERE department_id=?");
-                $stmt->bind_param("i", $department_id);
+            if (isset($_POST['id'])) {
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("DELETE FROM villages WHERE id=?");
+                $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
-                    $message = "Department record deleted successfully";
+                    $message = "Village record deleted successfully";
                     header("Location: {$_SERVER['PHP_SELF']}");
                     exit();
                 } else {
@@ -63,16 +64,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Fetch departments
-$query = "SELECT * FROM department";
-$departments = $conn->query($query);
+// Fetch villages with city names
+$query = "SELECT villages.id, villages.name, cities.name AS city_name 
+          FROM villages 
+          JOIN cities ON villages.city_id = cities.id";
+$villages = $conn->query($query);
+
+$query_city = "SELECT * FROM cities"; // Adjust if the table name for cities is different
+$cities = $conn->query($query_city);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Department Management</title>
+    <title>Village Management</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
@@ -97,7 +103,7 @@ $departments = $conn->query($query);
     <?php include("nav.php"); ?>
 
     <div class="container mt-5 mx-auto">
-        <h1 class="mb-4 text-center">Department Management</h1>
+        <h1 class="mb-4 text-center">Village Management</h1>
 
         <?php if (isset($message)): ?>
             <div class="alert alert-<?php echo strpos($message, 'Error') !== false ? 'danger' : 'success'; ?>">
@@ -106,8 +112,8 @@ $departments = $conn->query($query);
         <?php endif; ?>
 
         <?php if ($is_admin): ?>
-            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#departmentModal" onclick="openModal('create')">
-                Add Department
+            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#villageModal" onclick="openModal('create')">
+                Add Village
             </button>
         <?php endif; ?>
 
@@ -115,24 +121,26 @@ $departments = $conn->query($query);
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Department ID</th>
-                        <th>Department Name</th>
+                        <th>Village ID</th>
+                        <th>Village Name</th>
+                        <th>City Name</th>
                         <?php if ($is_admin): ?>
                             <th>Actions</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($department = $departments->fetch_assoc()): ?>
+                    <?php while ($village = $villages->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($department['department_id']); ?></td>
-                            <td><?php echo htmlspecialchars($department['department_name']); ?></td>
+                            <td><?php echo htmlspecialchars($village['id']); ?></td>
+                            <td><?php echo htmlspecialchars($village['name']); ?></td>
+                            <td><?php echo htmlspecialchars($village['city_name']); ?></td>
                             <?php if ($is_admin): ?>
                                 <td>
-                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#departmentModal" onclick='openModal("update", <?php echo json_encode($department); ?>)'>
+                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#villageModal" onclick='openModal("update", <?php echo json_encode($village); ?>)'>
                                         Edit
                                     </button>
-                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $department['department_id']; ?>)'>
+                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $village['id']; ?>)'>
                                         Delete
                                     </button>
                                 </td>
@@ -144,30 +152,40 @@ $departments = $conn->query($query);
         </div>
     </div>
 
-    <!-- Add/Edit Department Modal -->
-    <div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true">
+    <!-- Add/Edit Village Modal -->
+    <div class="modal fade" id="villageModal" tabindex="-1" aria-labelledby="villageModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="departmentModalLabel">Department Form</h5>
+                    <h5 class="modal-title" id="villageModalLabel">Village Form</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="departmentForm" method="POST">
-                        <input type="hidden" name="action" id="departmentAction">
-                        <input type="hidden" name="department_id" id="departmentId">
+                    <form id="villageForm" method="POST">
+                        <input type="hidden" name="action" id="villageAction">
+                        <input type="hidden" name="id" id="villageId">
                         <div class="form-group">
-                            <label for="department_name">Department Name</label>
-                            <input type="text" class="form-control" name="department_name" id="department_name" required>
+                            <label for="name">Village Name</label>
+                            <input type="text" class="form-control" name="name" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="city_id">City ID</label>
+                            <select class="form-control" name="city_id" id="city_id" required>
+                                <?php while ($city = $cities->fetch_assoc()): ?>
+                                    <option value="<?php echo htmlspecialchars($city['id']); ?>">
+                                        <?php echo htmlspecialchars($city['name']); ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <?php if ($is_admin): ?>
-                        <button type="submit" class="btn btn-primary" form="departmentForm">Save</button>
+                        <button type="submit" class="btn btn-primary" form="villageForm">Save</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -185,12 +203,12 @@ $departments = $conn->query($query);
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete this department?</p>
+                    <p>Are you sure you want to delete this village?</p>
                 </div>
                 <div class="modal-footer">
                     <form id="deleteForm" method="POST">
                         <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="department_id" id="deleteId">
+                        <input type="hidden" name="id" id="deleteId">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
@@ -201,17 +219,19 @@ $departments = $conn->query($query);
 
     <!-- JavaScript to handle modal functionality -->
     <script>
-        function openModal(action, department = null) {
+        function openModal(action, village = null) {
             if (action === 'update') {
-                $('#departmentModalLabel').text('Edit Department');
-                $('#departmentAction').val('update');
-                $('#departmentId').val(department.department_id);
-                $('#department_name').val(department.department_name);
+                $('#villageModalLabel').text('Edit Village');
+                $('#villageAction').val('update');
+                $('#villageId').val(village.id);
+                $('#name').val(village.name);
+                $('#city_id').val(village.city_id);
             } else {
-                $('#departmentModalLabel').text('Add Department');
-                $('#departmentAction').val('create');
-                $('#departmentId').val('');
-                $('#department_name').val('');
+                $('#villageModalLabel').text('Add Village');
+                $('#villageAction').val('create');
+                $('#villageId').val('');
+                $('#name').val('');
+                $('#city_id').val('');
             }
         }
 

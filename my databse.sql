@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 24, 2024 at 01:14 PM
+-- Generation Time: Jul 26, 2024 at 07:17 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -24,21 +24,39 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `cities`
+--
+
+CREATE TABLE `cities` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `province_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `cities`
+--
+
+INSERT INTO `cities` (`id`, `name`, `province_id`) VALUES
+(1, 'ໄຊເສດຖາ', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `department`
 --
 
 CREATE TABLE `department` (
-  `dep_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `location` varchar(255) NOT NULL
+  `department_id` int(11) NOT NULL,
+  `department_name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `department`
 --
 
-INSERT INTO `department` (`dep_id`, `name`, `location`) VALUES
-(1, 'ປະເພດຕຳ', 'ລາວ');
+INSERT INTO `department` (`department_id`, `department_name`) VALUES
+(1, 'fa');
 
 -- --------------------------------------------------------
 
@@ -47,26 +65,60 @@ INSERT INTO `department` (`dep_id`, `name`, `location`) VALUES
 --
 
 CREATE TABLE `employee` (
-  `E_ID` int(11) NOT NULL,
-  `Name` varchar(255) DEFAULT NULL,
-  `Surname` varchar(255) DEFAULT NULL,
-  `Gender` varchar(50) DEFAULT NULL,
-  `Age` int(11) DEFAULT NULL,
-  `DateOfBirth` date DEFAULT NULL,
-  `Address` varchar(255) DEFAULT NULL,
-  `PhoneNumber` varchar(20) DEFAULT NULL,
-  `Status` varchar(50) DEFAULT NULL,
-  `Email` varchar(255) DEFAULT NULL
+  `employee_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `surname` varchar(255) NOT NULL,
+  `gender` enum('Male','Female') NOT NULL,
+  `age` int(11) NOT NULL,
+  `date_of_birth` date NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `phone_number` varchar(15) NOT NULL,
+  `status` enum('Active','Inactive') NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `village_id` int(11) DEFAULT NULL,
+  `city_id` int(11) DEFAULT NULL,
+  `province_id` int(11) DEFAULT NULL,
+  `women_id` int(11) DEFAULT NULL,
+  `trade_union_id` int(11) DEFAULT NULL,
+  `youth_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `position`
+--
+
+CREATE TABLE `position` (
+  `position_id` int(11) NOT NULL,
+  `position_name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `employee`
+-- Dumping data for table `position`
 --
 
-INSERT INTO `employee` (`E_ID`, `Name`, `Surname`, `Gender`, `Age`, `DateOfBirth`, `Address`, `PhoneNumber`, `Status`, `Email`) VALUES
-(1, 'along', 'chalernsouk', 'ຊາຍ', 36, '2024-07-13', 'ຫ້ວຍເຕີ', '66489599', 'ແຕ່ງງານແລ້ວ', 'gftiff5@gmail.com'),
-(2, 'along', 'chalernsouk', 'ຊາຍ', 36, '2024-07-14', 'ຫ້ວຍເຕີຍ', '66489599', 'ແຕ່ງງານແລ້ວ', 'gftiff5@gmail.com'),
-(3, 'ghfuj', 'yhju', 'ຊາຍ', 55, '2024-07-18', 'ວັດໄຊ', '77945628', 'ມີເມຍແລ້ວ', 'brett37@example.orgghgfgfg');
+INSERT INTO `position` (`position_id`, `position_name`) VALUES
+(1, 'football'),
+(2, 'ceo');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `provinces`
+--
+
+CREATE TABLE `provinces` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `provinces`
+--
+
+INSERT INTO `provinces` (`id`, `name`) VALUES
+(1, 'ນະຄອນຫຼວງວຽງຈັນ');
 
 -- --------------------------------------------------------
 
@@ -76,31 +128,33 @@ INSERT INTO `employee` (`E_ID`, `Name`, `Surname`, `Gender`, `Age`, `DateOfBirth
 
 CREATE TABLE `staymember` (
   `P_ID` int(11) NOT NULL,
-  `Name` varchar(255) DEFAULT NULL,
-  `Surname` varchar(255) DEFAULT NULL,
-  `Gender` varchar(50) DEFAULT NULL,
-  `Status` varchar(50) DEFAULT NULL,
-  `PhoneNumber` varchar(20) DEFAULT NULL,
-  `IDNumber` varchar(255) DEFAULT NULL,
-  `Email` varchar(255) DEFAULT NULL,
+  `Name` varchar(255) NOT NULL,
+  `Surname` varchar(255) NOT NULL,
   `DayOfEntry` date DEFAULT NULL,
-  `Address` varchar(255) DEFAULT NULL,
-  `Position` varchar(255) DEFAULT NULL,
-  `Member` varchar(255) NOT NULL
+  `employee_id` int(11) DEFAULT NULL,
+  `DateOfSupport` date DEFAULT NULL,
+  `DateOfAlternate` date DEFAULT NULL,
+  `DateOfComplete` date DEFAULT NULL,
+  `position_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `trade_union`
+--
+
+CREATE TABLE `trade_union` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `staymember`
+-- Dumping data for table `trade_union`
 --
 
-INSERT INTO `staymember` (`P_ID`, `Name`, `Surname`, `Gender`, `Status`, `PhoneNumber`, `IDNumber`, `Email`, `DayOfEntry`, `Address`, `Position`, `Member`) VALUES
-(10, 'ArLong', 'Phouthavong', 'male', 'single', '12345678', '1234', 'cottonfleraykawaii@gmail.com', '2024-07-21', 'kkk', 'It Support', 'new_member'),
-(12, 'ເອງ', 'ພົນ', 'male', 'ມີເມຍແລ້ວ', '15978625', '222', 'brett37@example.orgghgfgfg', '2024-07-22', 'ຫ້ວຍເຕີຍ', 'It Support', 'moves_in'),
-(13, 'ຈັນພອນ', 'ໄຊຍະສີ', 'male', 'ແຕ່ງງານແລ້ວ', '96532787', '333', 'alongchalernsouk2020@gmail.com', '2024-07-22', 'ປາກທາງ', 'ຜູ້ຊ່ວຍ', 'moves_out'),
-(14, 'ລັດ', 'ທີນະດາ', 'female', 'ໂສດ', '77997821', '4444', 'alongchalernsouk2020@gmail.com', '2024-07-22', 'ຫ້ວຍເຕີຍ', 'Cleaner', 'moves_in'),
-(15, 'ດຳ', 'ໄຊທະນາ', 'male', 'ໂສດ', '99558866', '5555', 'brett37@example.orgghgfgfg', '2017-06-03', 'ສີວີໄລ່', 'HR', 'moves_in'),
-(16, 'ເຈນ', 'ທະນະພົນ', 'female', 'ແຕ່ງງານແລ້ວ', '12345678', '66666', 'cottonfleraykawaii@gmail.com', '2015-07-31', 'ວັດໃຕ້', 'ຜູ້ຊ່ວຍ', 'alternate_member'),
-(17, 'ກ່ຳ', 'ໄຊຍະວົງ', 'male', 'ໂສດ', '93993834', '7777', 'cottonfleraykawaii@gmail.com', '2024-03-04', 'ວັດໄຊ', 'It Support', 'complete_member');
+INSERT INTO `trade_union` (`id`, `name`) VALUES
+(0, 'kmk');
 
 -- --------------------------------------------------------
 
@@ -128,27 +182,116 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`, `created_at`) VALUES
 (14, 'user', '$2y$10$ijBcgN4UMJGTlLTLhCp9wOEUZ2D4b3aCpiYn.tyv8G6vW9.IBDF0S', 'user', '2024-07-24 06:42:30'),
 (16, 'Lao', '$2y$10$mcNT0g092JkzwYLpJs0wKOw/aRTF5EfQGNZCCLAgPNTBf0jsjhr5G', 'user', '2024-07-24 07:37:46');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `villages`
+--
+
+CREATE TABLE `villages` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `city_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `villages`
+--
+
+INSERT INTO `villages` (`id`, `name`, `city_id`) VALUES
+(1, 'ແສງສະຫວ່າງ', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `women`
+--
+
+CREATE TABLE `women` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `women`
+--
+
+INSERT INTO `women` (`id`, `name`) VALUES
+(0, 'women');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `youth`
+--
+
+CREATE TABLE `youth` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `youth`
+--
+
+INSERT INTO `youth` (`id`, `name`) VALUES
+(0, 'sapwnoum');
+
 --
 -- Indexes for dumped tables
 --
 
 --
+-- Indexes for table `cities`
+--
+ALTER TABLE `cities`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `province_id` (`province_id`);
+
+--
 -- Indexes for table `department`
 --
 ALTER TABLE `department`
-  ADD PRIMARY KEY (`dep_id`);
+  ADD PRIMARY KEY (`department_id`);
 
 --
 -- Indexes for table `employee`
 --
 ALTER TABLE `employee`
-  ADD PRIMARY KEY (`E_ID`);
+  ADD PRIMARY KEY (`employee_id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `village_id` (`village_id`),
+  ADD KEY `city_id` (`city_id`),
+  ADD KEY `province_id` (`province_id`),
+  ADD KEY `women_id` (`women_id`),
+  ADD KEY `trade_union_id` (`trade_union_id`),
+  ADD KEY `youth_id` (`youth_id`);
+
+--
+-- Indexes for table `position`
+--
+ALTER TABLE `position`
+  ADD PRIMARY KEY (`position_id`);
+
+--
+-- Indexes for table `provinces`
+--
+ALTER TABLE `provinces`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `staymember`
 --
 ALTER TABLE `staymember`
-  ADD PRIMARY KEY (`P_ID`);
+  ADD PRIMARY KEY (`P_ID`),
+  ADD KEY `fk_employee` (`employee_id`),
+  ADD KEY `fk_position` (`position_id`);
+
+--
+-- Indexes for table `trade_union`
+--
+ALTER TABLE `trade_union`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`
@@ -157,32 +300,109 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `villages`
+--
+ALTER TABLE `villages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `city_id` (`city_id`);
+
+--
+-- Indexes for table `women`
+--
+ALTER TABLE `women`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `youth`
+--
+ALTER TABLE `youth`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `cities`
+--
+ALTER TABLE `cities`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `department`
 --
 ALTER TABLE `department`
-  MODIFY `dep_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `department_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `E_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `employee_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `position`
+--
+ALTER TABLE `position`
+  MODIFY `position_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `provinces`
+--
+ALTER TABLE `provinces`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `staymember`
 --
 ALTER TABLE `staymember`
-  MODIFY `P_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `P_ID` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `villages`
+--
+ALTER TABLE `villages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `cities`
+--
+ALTER TABLE `cities`
+  ADD CONSTRAINT `cities_ibfk_1` FOREIGN KEY (`province_id`) REFERENCES `provinces` (`id`);
+
+--
+-- Constraints for table `employee`
+--
+ALTER TABLE `employee`
+  ADD CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`village_id`) REFERENCES `villages` (`id`),
+  ADD CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`city_id`) REFERENCES `cities` (`id`),
+  ADD CONSTRAINT `employee_ibfk_3` FOREIGN KEY (`province_id`) REFERENCES `provinces` (`id`),
+  ADD CONSTRAINT `employee_ibfk_4` FOREIGN KEY (`women_id`) REFERENCES `women` (`id`),
+  ADD CONSTRAINT `employee_ibfk_5` FOREIGN KEY (`trade_union_id`) REFERENCES `trade_union` (`id`),
+  ADD CONSTRAINT `employee_ibfk_6` FOREIGN KEY (`youth_id`) REFERENCES `youth` (`id`);
+
+--
+-- Constraints for table `staymember`
+--
+ALTER TABLE `staymember`
+  ADD CONSTRAINT `fk_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`),
+  ADD CONSTRAINT `fk_position` FOREIGN KEY (`position_id`) REFERENCES `position` (`position_id`);
+
+--
+-- Constraints for table `villages`
+--
+ALTER TABLE `villages`
+  ADD CONSTRAINT `villages_ibfk_1` FOREIGN KEY (`city_id`) REFERENCES `cities` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

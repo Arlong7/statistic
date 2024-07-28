@@ -1,85 +1,75 @@
 <?php
-session_start();
+include 'dbconnection.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// Check user role
-$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
-$is_user = isset($_SESSION['role']) && $_SESSION['role'] === 'user';
-
-include 'dbconnection.php'; // Include database connection script
-
-$search_query = '';
-$search_term = '';
-
+// Handle CRUD operations
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $action = $_POST['action'] ?? '';
+    $action = $_POST['action'];
 
-    if ($is_admin) {
-        // Handle Create and Update actions
-        if ($action == 'create' || $action == 'update') {
-            $name = $conn->real_escape_string($_POST['name']);
-            $surname = $conn->real_escape_string($_POST['surname']);
-            $gender = $conn->real_escape_string($_POST['gender']);
-            $age = (int)$_POST['age'];
-            $dob = $conn->real_escape_string($_POST['dob']);
-            $address = $conn->real_escape_string($_POST['address']);
-            $phonenumber = $conn->real_escape_string($_POST['phonenumber']);
-            $status = $conn->real_escape_string($_POST['status']);
-            $email = $conn->real_escape_string($_POST['email']);
+    if ($action == 'create') {
+        $name = $_POST['name'];
+        $surname = $_POST['surname'];
+        $gender = $_POST['gender'];
+        $age = $_POST['age'];
+        $date_of_birth = $_POST['date_of_birth'];
+        $address = $_POST['address'];
+        $phone_number = $_POST['phone_number'];
+        $status = $_POST['status'];
+        $email = $_POST['email'];
+        $village_id = $_POST['village_id'];
+        $city_id = $_POST['city_id'];
+        $province_id = $_POST['province_id'];
+        $department_id = $_POST['department_id'];
 
-            if ($action == 'create') {
-                $stmt = $conn->prepare("INSERT INTO Employee (Name, Surname, Gender, Age, DateOfBirth, Address, PhoneNumber, Status, Email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssisssss", $name, $surname, $gender, $age, $dob, $address, $phonenumber, $status, $email);
-            } else if ($action == 'update') {
-                $id = (int)$_POST['E_ID'];
-                $stmt = $conn->prepare("UPDATE Employee SET Name=?, Surname=?, Gender=?, Age=?, DateOfBirth=?, Address=?, PhoneNumber=?, Status=?, Email=? WHERE E_ID=?");
-                $stmt->bind_param("sssisssssi", $name, $surname, $gender, $age, $dob, $address, $phonenumber, $status, $email, $id);
-            }
+        $sql = "INSERT INTO employee (name, surname, gender, age, date_of_birth, address, phone_number, status, email, village_id, city_id, province_id, department_id)
+                VALUES ('$name', '$surname', '$gender', '$age', '$date_of_birth', '$address', '$phone_number', '$status', '$email', '$village_id', '$city_id', '$province_id', '$department_id')";
 
-            if ($stmt->execute()) {
-                $message = $action == 'create' ? "New employee record created successfully" : "Employee record updated successfully";
-                header("Location: {$_SERVER['PHP_SELF']}");
-                exit();
-            } else {
-                $message = "Error: " . $stmt->error;
-            }
-            $stmt->close();
+        if ($conn->query($sql) === TRUE) {
+            echo "New employee created successfully";
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->error;
         }
+    } elseif ($action == 'update') {
+        $employee_id = $_POST['employee_id'];
+        $name = $_POST['name'];
+        $surname = $_POST['surname'];
+        $gender = $_POST['gender'];
+        $age = $_POST['age'];
+        $date_of_birth = $_POST['date_of_birth'];
+        $address = $_POST['address'];
+        $phone_number = $_POST['phone_number'];
+        $status = $_POST['status'];
+        $email = $_POST['email'];
+        $village_id = $_POST['village_id'];
+        $city_id = $_POST['city_id'];
+        $province_id = $_POST['province_id'];
+        $department_id = $_POST['department_id'];
 
-        // Handle Delete action
-        if ($action == 'delete') {
-            if (isset($_POST['E_ID'])) {
-                $id = (int)$_POST['E_ID'];
-                $stmt = $conn->prepare("DELETE FROM Employee WHERE E_ID=?");
-                $stmt->bind_param("i", $id);
-                if ($stmt->execute()) {
-                    $message = "Employee record deleted successfully";
-                    header("Location: {$_SERVER['PHP_SELF']}");
-                    exit();
-                } else {
-                    $message = "Error: " . $stmt->error;
-                }
-                $stmt->close();
-            } else {
-                $message = "No ID specified for deletion.";
-            }
+        $sql = "UPDATE employee SET name='$name', surname='$surname', gender='$gender', age='$age', date_of_birth='$date_of_birth', address='$address', phone_number='$phone_number', status='$status', email='$email', village_id='$village_id', city_id='$city_id', province_id='$province_id', department_id='$department_id'
+                WHERE employee_id='$employee_id'";
+
+        if ($conn->query($sql) === TRUE) {
+            echo "Employee updated successfully";
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->error;
         }
+    } elseif ($action == 'delete') {
+        $employee_id = $_POST['employee_id'];
 
-        // Handle Search functionality for Admins
-        if (isset($_POST['search'])) {
-            $search_term = $conn->real_escape_string($_POST['search']);
-            $search_query = " WHERE Name LIKE '%$search_term%' OR Surname LIKE '%$search_term%' OR Email LIKE '%$search_term%'";
+        $sql = "DELETE FROM employee WHERE employee_id='$employee_id'";
+
+        if ($conn->query($sql) === TRUE) {
+            echo "Employee deleted successfully";
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->error;
         }
     }
 }
 
-$query = "SELECT * FROM Employee" . $search_query;
-$employees = $conn->query($query);
+// Fetch data for the select options
+$village_result = $conn->query("SELECT id, name FROM villages");
+$city_result = $conn->query("SELECT id, name FROM cities");
+$province_result = $conn->query("SELECT id, name FROM provinces");
+$department_result = $conn->query("SELECT department_id, department_name FROM department");
 ?>
 
 <!DOCTYPE html>
@@ -87,225 +77,321 @@ $employees = $conn->query($query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ຈັດການພະນັກງານ</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <style>
-        .table-container {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        thead th {
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 1;
-        }
-        .search-input {
-            max-width: 250px;
-        }
-    </style>
+    <title>Employee Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <?php include("nav.php"); ?>
-
-    <div class="container mt-5 mx-auto">
-        <h1 class="mb-4 text-center">ຈັດການພະນັກງານ</h1>
-
-        <?php if (isset($message)): ?>
-            <div class="alert alert-<?php echo strpos($message, 'Error') !== false ? 'danger' : 'success'; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($is_admin): ?>
-            <!-- Search Form -->
-            <form method="POST" class="mb-4">
-                <div class="form-group">
-                    <label for="search">ຄົ້ນຫາ</label>
-                    <input type="text" class="form-control search-input" name="search" id="search" value="<?php echo htmlspecialchars($search_term); ?>">
-                </div>
-                <button type="submit" class="btn btn-primary">ຄົ້ນຫາ</button>
-            </form>
-            
-            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#employeeModal" onclick="openModal('create')">
-                ເພີ່ມພະນັກງານ
-            </button>
-        <?php endif; ?>
-
-        <div class="table-container">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>E_ID</th>
-                        <th>ຊື່</th>
-                        <th>ນາມສະກຸນ</th>
-                        <th>ເພດ</th>
-                        <th>ອາຍຸ</th>
-                        <th>ວັນເກີດ</th>
-                        <th>ທີ່ຢູ່</th>
-                        <th>ເບີໂທ</th>
-                        <th>ສະຖານະ</th>
-                        <th>ອີເມວ</th>
-                        <?php if ($is_admin): ?>
-                            <th>ກະບວນການ</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($employee = $employees->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($employee['E_ID']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Name']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Surname']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Gender']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Age']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['DateOfBirth']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Address']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['PhoneNumber']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Status']); ?></td>
-                            <td><?php echo htmlspecialchars($employee['Email']); ?></td>
-                            <?php if ($is_admin): ?>
-                                <td>
-                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#employeeModal" onclick='openModal("update", <?php echo json_encode($employee); ?>)'>
-                                        ແກ້ໄຂ
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $employee['E_ID']; ?>)'>
-                                        ລົບ
-                                    </button>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+    <?php include('nav.php');?>
+    <div class="container mt-5">
+        <h2 class="mb-4">Employee Management</h2>
+        <button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#addModal">Add Employee</button>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Gender</th>
+                    <th>Age</th>
+                    <th>Date of Birth</th>
+                    <th>Address</th>
+                    <th>Phone Number</th>
+                    <th>Status</th>
+                    <th>Email</th>
+                    <th>Village</th>
+                    <th>City</th>
+                    <th>Province</th>
+                    <th>Department</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $result = $conn->query("SELECT e.*, v.name AS village_name, c.name AS city_name, p.name AS province_name, d.department_name AS department_name FROM employee e
+                                        JOIN villages v ON e.village_id = v.id
+                                        JOIN cities c ON e.city_id = c.id
+                                        JOIN provinces p ON e.province_id = p.id
+                                        JOIN department d ON e.department_id = d.department_id");
+                while ($row = $result->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>{$row['employee_id']}</td>";
+                    echo "<td>{$row['name']}</td>";
+                    echo "<td>{$row['surname']}</td>";
+                    echo "<td>{$row['gender']}</td>";
+                    echo "<td>{$row['age']}</td>";
+                    echo "<td>{$row['date_of_birth']}</td>";
+                    echo "<td>{$row['address']}</td>";
+                    echo "<td>{$row['phone_number']}</td>";
+                    echo "<td>{$row['status']}</td>";
+                    echo "<td>{$row['email']}</td>";
+                    echo "<td>{$row['village_name']}</td>";
+                    echo "<td>{$row['city_name']}</td>";
+                    echo "<td>{$row['province_name']}</td>";
+                    echo "<td>{$row['department_name']}</td>";
+                    echo "<td>";
+                    echo "<button class='btn btn-warning btn-sm' onclick='openEditModal(" . json_encode($row) . ")'>Edit</button>";
+                    echo " <button class='btn btn-danger btn-sm' onclick='deleteEmployee({$row['employee_id']})'>Delete</button>";
+                    echo "</td>";
+                    echo "</tr>";
+                }
+                ?>
+            </tbody>
+        </table>
     </div>
 
-    <!-- Add/Edit Employee Modal -->
-    <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+    <!-- Add Employee Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="employeeModalLabel">ແບບຟອມພະນັກງານ</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h5 class="modal-title" id="addModalLabel">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="employeeForm" method="POST">
-                        <input type="hidden" name="action" id="employeeAction">
-                        <input type="hidden" name="E_ID" id="employeeId">
-                        <div class="form-group">
-                            <label for="name">ຊື່</label>
-                            <input type="text" class="form-control" name="name" id="name" required>
+                    <form id="addEmployeeForm">
+                        <input type="hidden" name="action" value="create">
+                        <div class="mb-3">
+                            <label for="addName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="addName" name="name" required>
                         </div>
-                        <div class="form-group">
-                            <label for="surname">ນາມສະກຸນ</label>
-                            <input type="text" class="form-control" name="surname" id="surname" required>
+                        <div class="mb-3">
+                            <label for="addSurname" class="form-label">Surname</label>
+                            <input type="text" class="form-control" id="addSurname" name="surname" required>
                         </div>
-                        <div class="form-group">
-                            <label for="gender">ເພດ</label>
-                            <input type="text" class="form-control" name="gender" id="gender" required>
+                        <div class="mb-3">
+                            <label for="addGender" class="form-label">Gender</label>
+                            <input type="text" class="form-control" id="addGender" name="gender" required>
                         </div>
-                        <div class="form-group">
-                            <label for="age">ອາຍຸ</label>
-                            <input type="number" class="form-control" name="age" id="age" required>
+                        <div class="mb-3">
+                            <label for="addAge" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="addAge" name="age" required>
                         </div>
-                        <div class="form-group">
-                            <label for="dob">ວັນເກີດ</label>
-                            <input type="date" class="form-control" lang="en" name="dob" id="dob" required>
+                        <div class="mb-3">
+                            <label for="addDateOfBirth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="addDateOfBirth" name="date_of_birth" required>
                         </div>
-                        <div class="form-group">
-                            <label for="address">ທີ່ຢູ່</label>
-                            <input type="text" class="form-control" name="address" id="address" required>
+                        <div class="mb-3">
+                            <label for="addAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="addAddress" name="address" required>
                         </div>
-                        <div class="form-group">
-                            <label for="phonenumber">ເບີໂທ</label>
-                            <input type="text" class="form-control" name="phonenumber" id="phonenumber" required>
+                        <div class="mb-3">
+                            <label for="addPhoneNumber" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="addPhoneNumber" name="phone_number" required>
                         </div>
-                        <div class="form-group">
-                            <label for="status">ສະຖານະ</label>
-                            <input type="text" class="form-control" name="status" id="status" required>
+                        <div class="mb-3">
+                            <label for="addStatus" class="form-label">Status</label>
+                            <input type="text" class="form-control" id="addStatus" name="status" required>
                         </div>
-                        <div class="form-group">
-                            <label for="email">ອີເມວ</label>
-                            <input type="email" class="form-control" name="email" id="email" required>
+                        <div class="mb-3">
+                            <label for="addEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="addEmail" name="email" required>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ປິດ</button>
-                    <?php if ($is_admin): ?>
-                        <button type="submit" class="btn btn-primary" form="employeeForm">ບັນທຶກ</button>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">ຢືນຢັນການລົບ</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>ທ່ານແນ່ໃຈບໍ່ວ່າຈະລົບພະນັກງານນີ້ບໍ?</p>
-                </div>
-                <div class="modal-footer">
-                    <form id="deleteForm" method="POST">
-                        <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="E_ID" id="deleteId">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ປິດ</button>
-                        <button type="submit" class="btn btn-danger">ລົບ</button>
+                        <div class="mb-3">
+                            <label for="addVillage" class="form-label">Village</label>
+                            <select class="form-control" id="addVillage" name="village_id" required>
+                                <?php while ($row = $village_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addCity" class="form-label">City</label>
+                            <select class="form-control" id="addCity" name="city_id" required>
+                                <?php while ($row = $city_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addProvince" class="form-label">Province</label>
+                            <select class="form-control" id="addProvince" name="province_id" required>
+                                <?php while ($row = $province_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addDepartment" class="form-label">Department</label>
+                            <select class="form-control" id="addDepartment" name="department_id" required>
+                                <?php while ($row = $department_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['department_id'] ?>"><?= $row['department_name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Employee</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript to handle modal functionality -->
+    <!-- Edit Employee Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmployeeForm">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" id="editEmployeeId" name="employee_id">
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSurname" class="form-label">Surname</label>
+                            <input type="text" class="form-control" id="editSurname" name="surname" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editGender" class="form-label">Gender</label>
+                            <input type="text" class="form-control" id="editGender" name="gender" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAge" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="editAge" name="age" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDateOfBirth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="editDateOfBirth" name="date_of_birth" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="editAddress" name="address" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPhoneNumber" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="editPhoneNumber" name="phone_number" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <input type="text" class="form-control" id="editStatus" name="status" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editVillage" class="form-label">Village</label>
+                            <select class="form-control" id="editVillage" name="village_id" required>
+                                <?php
+                                $village_result->data_seek(0); // Reset the pointer to the beginning
+                                while ($row = $village_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCity" class="form-label">City</label>
+                            <select class="form-control" id="editCity" name="city_id" required>
+                                <?php
+                                $city_result->data_seek(0); // Reset the pointer to the beginning
+                                while ($row = $city_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editProvince" class="form-label">Province</label>
+                            <select class="form-control" id="editProvince" name="province_id" required>
+                                <?php
+                                $province_result->data_seek(0); // Reset the pointer to the beginning
+                                while ($row = $province_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['id'] ?>"><?= $row['name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDepartment" class="form-label">Department</label>
+                            <select class="form-control" id="editDepartment" name="department_id" required>
+                                <?php
+                                $department_result->data_seek(0); // Reset the pointer to the beginning
+                                while ($row = $department_result->fetch_assoc()) { ?>
+                                    <option value="<?= $row['department_id'] ?>"><?= $row['department_name'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Employee</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script>
-        function openModal(action, employee = null) {
-            if (action === 'update') {
-                $('#employeeModalLabel').text('ແກ້ໄຂພະນັກງານ');
-                $('#employeeAction').val('update');
-                $('#employeeId').val(employee.E_ID);
-                $('#name').val(employee.Name);
-                $('#surname').val(employee.Surname);
-                $('#gender').val(employee.Gender);
-                $('#age').val(employee.Age);
-                $('#dob').val(employee.DateOfBirth);
-                $('#address').val(employee.Address);
-                $('#phonenumber').val(employee.PhoneNumber);
-                $('#status').val(employee.Status);
-                $('#email').val(employee.Email);
-            } else {
-                $('#employeeModalLabel').text('ເພີ່ມພະນັກງານ');
-                $('#employeeAction').val('create');
-                $('#employeeId').val('');
-                $('#name').val('');
-                $('#surname').val('');
-                $('#gender').val('');
-                $('#age').val('');
-                $('#dob').val('');
-                $('#address').val('');
-                $('#phonenumber').val('');
-                $('#status').val('');
-                $('#email').val('');
+        function openEditModal(employee) {
+            document.getElementById('editEmployeeId').value = employee.employee_id;
+            document.getElementById('editName').value = employee.name;
+            document.getElementById('editSurname').value = employee.surname;
+            document.getElementById('editGender').value = employee.gender;
+            document.getElementById('editAge').value = employee.age;
+            document.getElementById('editDateOfBirth').value = employee.date_of_birth;
+            document.getElementById('editAddress').value = employee.address;
+            document.getElementById('editPhoneNumber').value = employee.phone_number;
+            document.getElementById('editStatus').value = employee.status;
+            document.getElementById('editEmail').value = employee.email;
+            document.getElementById('editVillage').value = employee.village_id;
+            document.getElementById('editCity').value = employee.city_id;
+            document.getElementById('editProvince').value = employee.province_id;
+            document.getElementById('editDepartment').value = employee.department_id;
+            var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        }
+
+        function deleteEmployee(employeeId) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                var form = new FormData();
+                form.append('action', 'delete');
+                form.append('employee_id', employeeId);
+
+                fetch('', {
+                    method: 'POST',
+                    body: form
+                }).then(response => response.text())
+                  .then(data => {
+                      alert(data);
+                      location.reload();
+                  }).catch(error => {
+                      console.error('Error:', error);
+                  });
             }
         }
 
-        function openDeleteModal(id) {
-            $('#deleteId').val(id);
-        }
+        document.getElementById('addEmployeeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var form = new FormData(this);
+
+            fetch('', {
+                method: 'POST',
+                body: form
+            }).then(response => response.text())
+              .then(data => {
+                  alert(data);
+                  location.reload();
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        });
+
+        document.getElementById('editEmployeeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var form = new FormData(this);
+
+            fetch('', {
+                method: 'POST',
+                body: form
+            }).then(response => response.text())
+              .then(data => {
+                  alert(data);
+                  location.reload();
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        });
     </script>
 </body>
 </html>
