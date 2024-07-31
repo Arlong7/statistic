@@ -55,10 +55,19 @@ $totalProvinces = executeQuery($sqlTotalProvinces)[0]['totalProvinces'];
 $sqlTotalCities = "SELECT COUNT(*) AS totalCities FROM Cities"; // Adjust table name and column as needed
 $totalCities = executeQuery($sqlTotalCities)[0]['totalCities'];
 
+// Query to get total number of divisions
+$sqlTotaldivisions = "SELECT COUNT(*) AS totaldivisions FROM division"; // Adjust table name and column as needed
+$totaldivisions = executeQuery($sqlTotaldivisions)[0]['totaldivisions'];
+
+// Query to get total number of families
+$sqlTotalFamily = "SELECT COUNT(*) AS totalFamily FROM family"; // Adjust table name and column as needed
+$totalFamily = executeQuery($sqlTotalFamily)[0]['totalFamily'];
+
 // Query to get total number of departments
 $sqlTotalDepartments = "SELECT COUNT(*) AS totalDepartments FROM Department"; // Adjust table name and column as needed
 $totalDepartments = executeQuery($sqlTotalDepartments)[0]['totalDepartments'];
 ?>
+
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -178,21 +187,43 @@ $totalDepartments = executeQuery($sqlTotalDepartments)[0]['totalDepartments'];
                 </div>
             </div>
 
-            <!-- Total Departments Section -->
+            <!-- Total Divisions Section -->
             <div class="bg-white shadow-lg rounded-lg p-6">
                 <div class="flex items-center mb-4">
                     <i class="fas fa-building text-blue-600 text-3xl mr-3"></i>
                     <h2 class="text-lg font-semibold text-gray-800">ລວມພະແນກ</h2>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-3xl font-bold text-blue-600"><?php echo $totalDepartments; ?></span>
+                    <span class="text-3xl font-bold text-blue-600"><?php echo $totaldivisions; ?></span>
+                </div>
+            </div>
+
+            <!-- Total Families Section -->
+            <div class="bg-white shadow-lg rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-users text-blue-600 text-3xl mr-3"></i>
+                    <h2 class="text-lg font-semibold text-gray-800">ລວມຄອບຄົວ</h2>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-3xl font-bold text-blue-600"><?php echo $totalFamily; ?></span>
+                </div>
+            </div>
+
+            <!-- Total Departments Section -->
+            <div class="bg-white shadow-lg rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-sitemap text-teal-600 text-3xl mr-3"></i>
+                    <h2 class="text-lg font-semibold text-gray-800">ລວມກົມ</h2>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-3xl font-bold text-teal-600"><?php echo $totalDepartments; ?></span>
                 </div>
             </div>
 
         </div>
 
     </div>
-
+    
     <!-- Font Awesome for icons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 </body>

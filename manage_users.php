@@ -10,19 +10,18 @@ if (!isset($_SESSION['user_id'])) {
 // Check if user's role is defined and is admin
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : 'user';
 
-// Ensure only admin can access this page
-if ($role !== 'admin') {
-    // Redirect to unauthorized page or handle accordingly
-    header("Location: unauthorized.php");
-    exit();
-}
+
 
 // Database connection
 include_once 'dbconnection.php';
 
 // Function to fetch all users from the database
 function getAllUsers($conn) {
-    $sql = "SELECT id, username, role FROM users";
+    $sql = "
+        SELECT u.id, u.username, u.role, e.employee_id, e.surname
+        FROM users u
+        LEFT JOIN employee e ON u.employee_id = e.employee_id
+    ";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         return $result->fetch_all(MYSQLI_ASSOC);
@@ -75,6 +74,8 @@ $users = getAllUsers($conn);
                     <th class="px-4 py-2">ID</th>
                     <th class="px-4 py-2">Username</th>
                     <th class="px-4 py-2">Role</th>
+                    <th class="px-4 py-2">Employee ID</th>
+                    <th class="px-4 py-2">Surname</th>
                     <th class="px-4 py-2">Actions</th>
                 </tr>
             </thead>
@@ -84,6 +85,8 @@ $users = getAllUsers($conn);
                         <td class="border px-4 py-2"><?php echo htmlspecialchars($user['id']); ?></td>
                         <td class="border px-4 py-2"><?php echo htmlspecialchars($user['username']); ?></td>
                         <td class="border px-4 py-2"><?php echo htmlspecialchars($user['role']); ?></td>
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($user['employee_id']) ? htmlspecialchars($user['employee_id']) : 'None'; ?></td>
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($user['surname']) ? htmlspecialchars($user['surname']) : 'None'; ?></td>
                         <td class="border px-4 py-2">
                             <!-- Delete form -->
                             <form method="post" action="">

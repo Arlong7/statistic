@@ -38,7 +38,7 @@
   <!-- Sidebar -->
   <aside class="bg-gray-800 w-64 h-screen shadow-lg fixed top-0 left-0 z-10">
     <div class="px-4 py-6 h-full flex flex-col">
-      <a href="dashboard.php" class="font-bold text-white text-2xl block border-b-4 border-white mb-6">ສະຖິຕິ</a>
+      <a href="logo.php" class="font-bold text-white text-2xl block border-b-4 border-white mb-6">ສະຖິຕິ</a>
       <nav class="space-y-2 flex-grow">
         <a href="home.php" class="nav-item block py-3 px-4 text-gray-300 font-semibold rounded-lg">ໜ້າຫຼັກ</a>
         
@@ -52,7 +52,8 @@
             <a href="village.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ບ້ານ</a>
             <a href="city.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ເມືອງ</a>
             <a href="province.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ແຂວງ</a>
-            <a href="department.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ພະແນກ</a>
+            <a href="division.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ພະແນກ</a>
+            <a href="department.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ກົມ</a>
             <a href="position.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ຕໍາແໜ່ງ</a>
           </div>
         </div>
@@ -76,7 +77,7 @@
           <div id="dropdown-menu-3" class="dropdown-menu absolute left-full top-0 bg-white shadow-lg rounded-lg w-48 ml-2">
             <a href="youth.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ຊາວໜຸ່ມ</a>
             <a href="trade_union.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ກໍາມະບານ</a>
-            <a href="women.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ແມ່ຍງ</a>
+            <a href="women.php" class="block py-2 px-4 text-gray-800 hover:bg-gray-200">ແມ່ຍິງ</a>
           </div>
         </div>
 

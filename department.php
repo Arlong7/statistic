@@ -1,222 +1,335 @@
 <?php
+include 'dbconnection.php'; // Include database connection file
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+$response = array();
+
+// Enable error reporting for debugging
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+// Handle AJAX Requests
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $action = isset($_POST['action']) ? $_POST['action'] : null;
+
+    if ($action == 'create') {
+        $name = $_POST['name'];
+        $division_id = $_POST['division_id'];
+
+        // Check if the division_id exists
+        $check_division_sql = "SELECT division_id FROM division WHERE division_id = ?";
+        $stmt = $conn->prepare($check_division_sql);
+        $stmt->bind_param('i', $division_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Division exists, proceed with insertion
+            $sql = "INSERT INTO department (name, division_id) VALUES (?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('si', $name, $division_id);
+
+            if ($stmt->execute()) {
+                $response['success'] = true;
+                $response['message'] = "Entry added successfully.";
+            } else {
+                $response['success'] = false;
+                $response['error'] = "Error executing query: " . $stmt->error;
+            }
+        } else {
+            $response['success'] = false;
+            $response['error'] = "Error: Division ID does not exist.";
+        }
+    } elseif ($action == 'update') {
+        $id = $_POST['id'];
+        $name = $_POST['name'];
+        $division_id = $_POST['division_id'];
+
+        // Check if the division_id exists
+        $check_division_sql = "SELECT division_id FROM division WHERE division_id = ?";
+        $stmt = $conn->prepare($check_division_sql);
+        $stmt->bind_param('i', $division_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Division exists, proceed with update
+            $sql = "UPDATE department SET name = ?, division_id = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('sii', $name, $division_id, $id);
+
+            if ($stmt->execute()) {
+                $response['success'] = true;
+                $response['message'] = "Entry updated successfully.";
+            } else {
+                $response['success'] = false;
+                $response['error'] = "Error executing query: " . $stmt->error;
+            }
+        } else {
+            $response['success'] = false;
+            $response['error'] = "Error: Division ID does not exist.";
+        }
+    } elseif ($action == 'delete') {
+        $id = $_POST['id'];
+
+        // Check if the row exists before attempting to delete
+        $check_department_sql = "SELECT id FROM department WHERE id = ?";
+        $stmt = $conn->prepare($check_department_sql);
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // Proceed with delete
+            $sql = "DELETE FROM department WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('i', $id);
+
+            if ($stmt->execute()) {
+                $response['success'] = true;
+                $response['message'] = "Entry deleted successfully.";
+            } else {
+                $response['success'] = false;
+                $response['error'] = "Error executing query: " . $stmt->error;
+            }
+        } else {
+            $response['success'] = false;
+            $response['error'] = "Error: Record not found.";
+        }
+    } else {
+        $response['success'] = false;
+        $response['error'] = "Error: No action specified.";
+    }
+
+    echo json_encode($response);
     exit();
 }
 
-// Check user role
-$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+// Fetch Data
+$sql = "SELECT d.id, d.name, d.division_id, v.division_name AS division_name 
+        FROM department d 
+        JOIN division v ON d.division_id = v.division_id";
+$result = $conn->query($sql);
 
-include 'dbconnection.php'; // Include database connection script
-
-$search_query = '';
-$search_term = '';
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $action = $_POST['action'] ?? '';
-
-    if ($is_admin) {
-        // Handle Create and Update actions
-        if ($action == 'create' || $action == 'update') {
-            $department_name = $conn->real_escape_string($_POST['department_name']);
-
-            if ($action == 'create') {
-                $stmt = $conn->prepare("INSERT INTO department (department_name) VALUES (?)");
-                $stmt->bind_param("s", $department_name);
-            } else if ($action == 'update') {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("UPDATE department SET department_name=? WHERE department_id=?");
-                $stmt->bind_param("si", $department_name, $department_id);
-            }
-
-            if ($stmt->execute()) {
-                $message = $action == 'create' ? "New department record created successfully" : "Department record updated successfully";
-                header("Location: {$_SERVER['PHP_SELF']}");
-                exit();
-            } else {
-                $message = "Error: " . $stmt->error;
-            }
-            $stmt->close();
-        }
-
-        // Handle Delete action
-        if ($action == 'delete') {
-            if (isset($_POST['department_id'])) {
-                $department_id = (int)$_POST['department_id'];
-                $stmt = $conn->prepare("DELETE FROM department WHERE department_id=?");
-                $stmt->bind_param("i", $department_id);
-                if ($stmt->execute()) {
-                    $message = "Department record deleted successfully";
-                    header("Location: {$_SERVER['PHP_SELF']}");
-                    exit();
-                } else {
-                    $message = "Error: " . $stmt->error;
-                }
-                $stmt->close();
-            } else {
-                $message = "No ID specified for deletion.";
-            }
-        }
-    }
+if (!$result) {
+    die("Error fetching data: " . $conn->error);
 }
 
-// Fetch departments
-$query = "SELECT * FROM department";
-$departments = $conn->query($query);
+// Fetch Divisions for the dropdown
+$divisions_sql = "SELECT division_id, division_name FROM division";
+$divisions_result = $conn->query($divisions_sql);
+
+if (!$divisions_result) {
+    die("Error fetching divisions: " . $conn->error);
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Department Management</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        .table-container {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        thead th {
-            position: sticky;
+        /* Style for modal */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
             top: 0;
-            background: #f8f9fa;
-            z-index: 1;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
         }
-        .search-input {
-            max-width: 250px;
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
-<body>
-    <?php include("nav.php"); ?>
+<body class="bg-gray-100 flex">
+    <?php include('nav.php'); ?> <!-- Navigation sidebar -->
+    <div class="container mx-auto mt-8">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">Department Management / ກົມ</h1>
+            <button onclick="openModal('createModal')" class="bg-blue-500 text-white px-4 py-2 rounded">Add Entry</button>
+        </div>
 
-    <div class="container mt-5 mx-auto">
-        <h1 class="mb-4 text-center">Department Management</h1>
+        <div id="errorMessage" class="bg-red-500 text-white p-4 mb-4 hidden"></div>
 
-        <?php if (isset($message)): ?>
-            <div class="alert alert-<?php echo strpos($message, 'Error') !== false ? 'danger' : 'success'; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($is_admin): ?>
-            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#departmentModal" onclick="openModal('create')">
-                Add Department
-            </button>
-        <?php endif; ?>
-
-        <div class="table-container">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Department ID</th>
-                        <th>Department Name</th>
-                        <?php if ($is_admin): ?>
-                            <th>Actions</th>
-                        <?php endif; ?>
+        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b">ID</th>
+                    <th class="py-2 px-4 border-b">Name</th>
+                    <th class="py-2 px-4 border-b">Division ID</th>
+                    <th class="py-2 px-4 border-b">Division Name</th>
+                    <th class="py-2 px-4 border-b">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr data-id="<?php echo $row['id']; ?>">
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($row['id']); ?></td>
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($row['division_id']); ?></td>
+                        <td class="border px-4 py-2"><?php echo htmlspecialchars($row['division_name']); ?></td>
+                        <td class="border px-4 py-2">
+                            <button onclick="openModal('updateModal', <?php echo $row['id']; ?>, '<?php echo $row['name']; ?>', <?php echo $row['division_id']; ?>)" class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
+                            <button onclick="deleteEntry(<?php echo $row['id']; ?>)" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php while ($department = $departments->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($department['department_id']); ?></td>
-                            <td><?php echo htmlspecialchars($department['department_name']); ?></td>
-                            <?php if ($is_admin): ?>
-                                <td>
-                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#departmentModal" onclick='openModal("update", <?php echo json_encode($department); ?>)'>
-                                        Edit
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" onclick='openDeleteModal(<?php echo $department['department_id']; ?>)'>
-                                        Delete
-                                    </button>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
 
-    <!-- Add/Edit Department Modal -->
-    <div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <!-- Create Modal -->
+        <div id="createModal" class="modal">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="departmentModalLabel">Department Form</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="departmentForm" method="POST">
-                        <input type="hidden" name="action" id="departmentAction">
-                        <input type="hidden" name="department_id" id="departmentId">
-                        <div class="form-group">
-                            <label for="department_name">Department Name</label>
-                            <input type="text" class="form-control" name="department_name" id="department_name" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <?php if ($is_admin): ?>
-                        <button type="submit" class="btn btn-primary" form="departmentForm">Save</button>
-                    <?php endif; ?>
-                </div>
+                <span class="close" onclick="closeModal('createModal')">&times;</span>
+                <h2 class="text-xl font-bold">Add</h2>
+                <form id="createForm">
+                    <label for="name" class="block mb-2">Name:</label>
+                    <input type="text" id="name" name="name" class="border border-gray-300 p-2 w-full mb-4" required>
+                    
+                    <label for="division_id" class="block mb-2">Division:</label>
+                    <select id="division_id" name="division_id" class="border border-gray-300 p-2 w-full mb-4" required>
+                        <?php while ($div = $divisions_result->fetch_assoc()): ?>
+                            <option value="<?php echo $div['division_id']; ?>"><?php echo htmlspecialchars($div['division_id']) . ' - ' . htmlspecialchars($div['division_name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <button type="button" onclick="createEntry()" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Update Modal -->
+        <div id="updateModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('updateModal')">&times;</span>
+                <h2 class="text-xl font-bold">Update</h2>
+                <form id="updateForm">
+                    <input type="hidden" id="update_id" name="id">
+                    
+                    <label for="update_name" class="block mb-2">Name:</label>
+                    <input type="text" id="update_name" name="name" class="border border-gray-300 p-2 w-full mb-4" required>
+                    
+                    <label for="update_division_id" class="block mb-2">Division:</label>
+                    <select id="update_division_id" name="division_id" class="border border-gray-300 p-2 w-full mb-4" required>
+                        <?php 
+                        // Reset the pointer to the beginning of the division result set
+                        $divisions_result->data_seek(0); 
+                        while ($div = $divisions_result->fetch_assoc()): ?>
+                            <option value="<?php echo $div['division_id']; ?>"><?php echo htmlspecialchars($div['division_id']) . ' - ' . htmlspecialchars($div['division_name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <button type="button" onclick="updateEntry()" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this department?</p>
-                </div>
-                <div class="modal-footer">
-                    <form id="deleteForm" method="POST">
-                        <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="department_id" id="deleteId">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript to handle modal functionality -->
     <script>
-        function openModal(action, department = null) {
-            if (action === 'update') {
-                $('#departmentModalLabel').text('Edit Department');
-                $('#departmentAction').val('update');
-                $('#departmentId').val(department.department_id);
-                $('#department_name').val(department.department_name);
-            } else {
-                $('#departmentModalLabel').text('Add Department');
-                $('#departmentAction').val('create');
-                $('#departmentId').val('');
-                $('#department_name').val('');
+        function openModal(modalId, id = null, name = '', divisionId = null) {
+            document.getElementById(modalId).style.display = 'block';
+
+            if (id) {
+                // Populate update modal fields
+                document.getElementById('update_id').value = id;
+                document.getElementById('update_name').value = name;
+                document.getElementById('update_division_id').value = divisionId;
             }
         }
 
-        function openDeleteModal(id) {
-            $('#deleteId').val(id);
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function createEntry() {
+            const form = document.getElementById('createForm');
+            const formData = new FormData(form);
+            formData.append('action', 'create');
+
+            fetch('department.php', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      // Reload data
+                      location.reload();
+                  } else {
+                      document.getElementById('errorMessage').innerText = data.error;
+                      document.getElementById('errorMessage').classList.remove('hidden');
+                  }
+              });
+        }
+
+        function updateEntry() {
+            const form = document.getElementById('updateForm');
+            const formData = new FormData(form);
+            formData.append('action', 'update');
+
+            fetch('department.php', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      // Reload data
+                      location.reload();
+                  } else {
+                      document.getElementById('errorMessage').innerText = data.error;
+                      document.getElementById('errorMessage').classList.remove('hidden');
+                  }
+              });
+        }
+
+        function deleteEntry(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id', id);
+
+                fetch('department.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Reload data
+                          location.reload();
+                      } else {
+                          document.getElementById('errorMessage').innerText = data.error;
+                          document.getElementById('errorMessage').classList.remove('hidden');
+                      }
+                  });
+            }
         }
     </script>
 </body>

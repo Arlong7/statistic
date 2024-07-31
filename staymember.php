@@ -40,12 +40,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['role'] === 'admin') {
         return $conn->real_escape_string($_POST[$field] ?? '');
     }, $fields);
 
+    if ($action === 'delete') {
+        $id = $conn->real_escape_string($_POST['id']);
+        $sql = "DELETE FROM StayMember WHERE P_ID='$id'";
+        
+        if ($conn->query($sql) === TRUE) {
+            $conn->close();
+            header("Location: {$_SERVER['PHP_SELF']}");
+            exit();
+        } else {
+            echo 'Error: ' . $conn->error;
+            exit();
+        }
+    }
+
     // Verify position_id exists in position table
     $position_id = $data[3];
-    $position_check_sql = "SELECT position_id FROM position WHERE position_id='$position_id'";
+    $position_check_sql = "SELECT position_id FROM `position` WHERE position_id='$position_id'";
     $position_check_result = $conn->query($position_check_sql);
     if ($position_check_result->num_rows == 0) {
-        die("Error: Invalid position_id");
+        $conn->close();
+        header("Location: {$_SERVER['PHP_SELF']}?message=Error: Invalid position_id&messageType=error");
+        exit();
     }
 
     // Verify employee_id exists in employee table
@@ -53,7 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['role'] === 'admin') {
     $employee_check_sql = "SELECT employee_id FROM employee WHERE employee_id='$employee_id'";
     $employee_check_result = $conn->query($employee_check_sql);
     if ($employee_check_result->num_rows == 0) {
-        die("Error: Invalid employee_id");
+        $conn->close();
+        header("Location: {$_SERVER['PHP_SELF']}?message=Error: Invalid employee_id&messageType=error");
+        exit();
     }
 
     switch ($action) {
@@ -68,20 +86,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_SESSION['role'] === 'admin') {
             }, $fields, $data));
             $sql = "UPDATE StayMember SET $set WHERE P_ID='$id'";
             break;
-        case 'delete':
-            $id = $conn->real_escape_string($_POST['id']);
-            $sql = "DELETE FROM StayMember WHERE P_ID='$id'";
-            break;
     }
 
     if ($conn->query($sql) === TRUE) {
-        echo "ການປ່ອນຂໍໍ້ມູນສໍາເລັດ!";
+        $conn->close();
+        header("Location: {$_SERVER['PHP_SELF']}");
+        exit();
     } else {
-        echo "ຄໍາລັດ: " . $conn->error;
+        echo 'Error: ' . $conn->error;
+        exit();
     }
 }
 
-// Fetch data with optional search filter
 $search = $conn->real_escape_string($_GET['search'] ?? '');
 $sql = "SELECT sm.*, p.position_name, e.name AS employee_name
         FROM StayMember sm
@@ -92,12 +108,12 @@ if ($search) {
 }
 $result = $conn->query($sql);
 
-// Fetch positions and employees for dropdowns
 $positions = getPositions($conn);
 $employees = getEmployees($conn);
 
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -141,8 +157,13 @@ $conn->close();
             <h1 class="text-2xl font-bold mb-6">ຈັດການສະມາຊິກພັກ</h1>
             <?php if ($_SESSION['role'] === 'admin') : ?>
                 <!-- Only show CRUD buttons for admin -->
-                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4" onclick="openModal('create')">ເພີ່ມສະມາຊິກພັກ</button>
-                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4" onclick="printTable()">ພິມລາຍງານ</button>
+                <div class="flex mb-4">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="openModal('create')">ເພີ່ມສະມາຊິກພັກ</button>
+                    <button onclick="printTable()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+        ພິມ
+    </button>
+                    
+                </div>
             <?php endif; ?>
             <!-- Search Form -->
             <form method="GET" class="mb-4">
@@ -175,10 +196,10 @@ $conn->close();
                                     <label for="modal<?php echo $field; ?>" class="block text-sm font-medium text-gray-700">
                                         <?php 
                                             switch ($field) {
-                                                case 'DayOfEntry': echo 'ວັນທີເຂົ້າສະມາຊິກ'; break; // DayOfEntry
-                                                case 'DateOfSupport': echo 'ວັນທີໄດ້ຮັບການຊ່ອຍເຫຼືອ'; break; // DateOfSupport
-                                                case 'DateOfAlternate': echo 'ວັນທີສະຫຼັບຕຳແໜ່ງ'; break; // DateOfAlternate
-                                                case 'DateOfComplete': echo 'ວັນທີສຳເລັດ'; break; // DateOfComplete
+                                                case 'DayOfEntry': echo 'ວັນທີ່ເຂົ້າ'; break; // Day Of Entry
+                                                case 'DateOfSupport': echo 'ວັນທີ່ສະຫນັບສະຫນູນ'; break; // Date Of Support
+                                                case 'DateOfAlternate': echo 'ວັນທີ່ສຳຮອງ'; break; // Date Of Alternate
+                                                case 'DateOfComplete': echo 'ວັນທີ່ແລ້ວເສັດ'; break; // Date Of Complete
                                             }
                                         ?>
                                     </label>
@@ -202,45 +223,66 @@ $conn->close();
                                 </select>
                             </div>
                             <div class="flex justify-end">
-                                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">ບັນທຶກ</button>
+                                <button type="button" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="closeModal()">ຍົກເລີກ</button>
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">ຢືນຢັນ</button>
                             </div>
                         </form>
                     </div>
                 </div>
             <?php endif; ?>
-            <!-- Data Table -->
-            <div class="scrollable-table-container">
-                <table class="w-full bg-white">
+            <!-- Success/Error Message Modal -->
+            <?php if (isset($_GET['message'])) : ?>
+                <div id="messageModal" class="fixed inset-0 flex items-center justify-center z-50">
+                    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm relative">
+                        <span class="absolute top-2 right-2 text-gray-500 cursor-pointer" onclick="document.getElementById('messageModal').style.display='none'">✖</span>
+                        <p class="text-lg <?php echo $_GET['messageType'] === 'success' ? 'text-green-600' : 'text-red-600'; ?>">
+                            <?php echo htmlspecialchars($_GET['message']); ?>
+                        </p>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <!-- StayMember Table -->
+            <div class="scrollable-table-container bg-white shadow-md rounded-lg overflow-hidden">
+                <table class="min-w-full">
                     <thead>
                         <tr>
-                            <th>ຊື່</th>
-                            <th>ນາມສະກຸນ</th>
-                            <th>ວັນທີເຂົ້າສະມາຊິກ</th>
-                            <th>ຕຳແໜ່ງ</th>
-                            <th>ພະນັກງານ</th>
-                            <th>ວັນທີໄດ້ຮັບການຊ່ອຍເຫຼືອ</th>
-                            <th>ວັນທີສະຫຼັບຕຳແໜ່ງ</th>
-                            <th>ວັນທີສຳເລັດ</th>
+                            <th class="px-4 py-2">ID</th>
+                            <th class="px-4 py-2">ຊື່</th>
+                            <th class="px-4 py-2">ນາມສະກຸນ</th>
+                            <th class="px-4 py-2">ວັນທີ່ເຂົ້າ</th>
+                            <th class="px-4 py-2">ຕຳແໜ່ງ</th>
+                            <th class="px-4 py-2">ພະນັກງານ</th>
+                            <th class="px-4 py-2">ວັນທີ່ສະຫນັບສະຫນູນ</th>
+                            <th class="px-4 py-2">ວັນທີ່ສຳຮອງ</th>
+                            <th class="px-4 py-2">ວັນທີ່ແລ້ວເສັດ</th>
                             <?php if ($_SESSION['role'] === 'admin') : ?>
-                                <th>ຈັດການ</th>
+                                <th class="px-4 py-2">ແກ້ໄຂ</th>
+                                <th class="px-4 py-2">ລຶບ</th>
                             <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php while ($row = $result->fetch_assoc()) : ?>
                             <tr>
-                                <td><?php echo $row['Name']; ?></td>
-                                <td><?php echo $row['Surname']; ?></td>
-                                <td><?php echo $row['DayOfEntry']; ?></td>
-                                <td><?php echo $row['position_name']; ?></td>
-                                <td><?php echo $row['employee_name']; ?></td>
-                                <td><?php echo $row['DateOfSupport']; ?></td>
-                                <td><?php echo $row['DateOfAlternate']; ?></td>
-                                <td><?php echo $row['DateOfComplete']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['P_ID']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['Name']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['Surname']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['DayOfEntry']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['position_name']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['employee_name']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['DateOfSupport']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['DateOfAlternate']; ?></td>
+                                <td class="border px-4 py-2"><?php echo $row['DateOfComplete']; ?></td>
                                 <?php if ($_SESSION['role'] === 'admin') : ?>
-                                    <td>
+                                    <td class="border px-4 py-2">
                                         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" onclick="openModal('update', <?php echo htmlspecialchars(json_encode($row)); ?>)">ແກ້ໄຂ</button>
-                                        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="openModal('delete', <?php echo $row['P_ID']; ?>)">ລົບ</button>
+                                    </td>
+                                    <td class="border px-4 py-2">
+                                        <form method="POST">
+                                            <input type="hidden" name="id" value="<?php echo $row['P_ID']; ?>">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="return confirm('Are you sure you want to delete this record?')">ລຶບ</button>
+                                        </form>
                                     </td>
                                 <?php endif; ?>
                             </tr>
@@ -250,34 +292,96 @@ $conn->close();
             </div>
         </div>
     </div>
+
     <script>
-        function openModal(action, data = null) {
+        function openModal(action, data = {}) {
+            document.getElementById('modalId').value = data.P_ID || '';
+            document.getElementById('modalName').value = data.Name || '';
+            document.getElementById('modalSurname').value = data.Surname || '';
+            document.getElementById('modalDayOfEntry').value = data.DayOfEntry || '';
+            document.getElementById('modalposition_id').value = data.position_id || '';
+            document.getElementById('modalemployee_id').value = data.employee_id || '';
+            document.getElementById('modalDateOfSupport').value = data.DateOfSupport || '';
+            document.getElementById('modalDateOfAlternate').value = data.DateOfAlternate || '';
+            document.getElementById('modalDateOfComplete').value = data.DateOfComplete || '';
             document.getElementById('modalAction').value = action;
-            if (action === 'update') {
-                document.getElementById('modalId').value = data.P_ID;
-                document.getElementById('modalName').value = data.Name;
-                document.getElementById('modalSurname').value = data.Surname;
-                document.getElementById('modalDayOfEntry').value = data.DayOfEntry;
-                document.getElementById('modalposition_id').value = data.position_id;
-                document.getElementById('modalemployee_id').value = data.employee_id;
-                document.getElementById('modalDateOfSupport').value = data.DateOfSupport;
-                document.getElementById('modalDateOfAlternate').value = data.DateOfAlternate;
-                document.getElementById('modalDateOfComplete').value = data.DateOfComplete;
-            } else if (action === 'create') {
-                document.getElementById('modalForm').reset();
-            } else if (action === 'delete') {
-                document.getElementById('modalId').value = data;
-            }
             document.getElementById('modal').classList.remove('hidden');
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
         }
-
         function printTable() {
-            window.print();
+        var originalContents = document.body.innerHTML;
+        var printContents = document.querySelector('.scrollable-table-container').innerHTML;
+        
+        // Create a temporary DOM element to manipulate the table HTML
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = printContents;
+
+        // Remove the last two columns from the table header and rows
+        var table = tempDiv.querySelector('table');
+        if (table) {
+            var headerCells = table.querySelectorAll('thead th');
+            var bodyRows = table.querySelectorAll('tbody tr');
+
+            // Remove the last two header columns
+            if (headerCells.length > 2) {
+                headerCells[headerCells.length - 1].remove();
+                headerCells[headerCells.length - 2].remove();
+            }
+
+            // Remove the last two data columns from each row
+            bodyRows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                if (cells.length > 2) {
+                    cells[cells.length - 1].remove();
+                    cells[cells.length - 2].remove();
+                }
+            });
         }
+        
+        // Create the print view content
+        document.body.innerHTML = `
+            <html>
+            <head>
+                <title>Print Table</title>
+                <style>
+                    body { font-family: 'Phetsarath OT', sans-serif; }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 0.8em; /* Adjust font size for print */
+                    }
+                    th, td {
+                        border: 1px solid black;
+                        padding: 4px; /* Adjust padding for print */
+                        text-align: left;
+                    }
+                    th {
+                        background-color: #f2f2f2;
+                        font-size: 0.7em; /* Smaller header font size */
+                    }
+                    @media print {
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .scrollable-table-container {
+                            max-height: none; /* Ensure the table is not cut off */
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${tempDiv.innerHTML}
+            </body>
+            </html>`;
+        
+        window.print();
+        document.body.innerHTML = originalContents;
+    }
+</script>
     </script>
 </body>
 </html>

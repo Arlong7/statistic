@@ -20,7 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
             $_SESSION['role'] = $row['role']; // Assuming 'role' column exists in your users table
-            header("Location: dashboard.php");
+
+            // Redirect based on role
+            if ($row['role'] === 'admin') {
+                header("Location: dashboard.php");
+            } else if ($row['role'] === 'user') {
+                header("Location: userpage.php"); // Redirect to user-specific page
+            }
             exit();
         } else {
             $message = "Invalid username or password."; // Incorrect password
